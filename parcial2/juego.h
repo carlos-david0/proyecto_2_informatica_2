@@ -10,7 +10,8 @@ public:
     ~juego();
     std::string print_tablero();
     bool movimiento_valido(std::string casilla, int turno);
-    bool movimientos_disponibles();
+    bool movimiento_valido(int fila, int columna, int turno);
+    int movimientos_disponibles(int turno);
 private:
     casilla** tablero;
     int filas;

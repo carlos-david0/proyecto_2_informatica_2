@@ -44,7 +44,7 @@ std::string juego::print_tablero()
     return tabla;
 }
 
-bool juego::movimiento_valido(std::string casilla, int turno)
+bool juego::movimiento_valido(int fila, int columna, int turno)
 {
     char enemigo = '-';
     if (turno % 2 == 0){
@@ -53,8 +53,6 @@ bool juego::movimiento_valido(std::string casilla, int turno)
     bool validez = false;
     bool encontrado = false;
     int i = 1;
-    int fila = int(casilla[0]) - 65;
-    int columna = int(casilla[1] - 49);
     while(columna - i >= 0){
         if (tablero[fila][columna-i].get_estado() == ' '){
             break;
@@ -67,7 +65,7 @@ bool juego::movimiento_valido(std::string casilla, int turno)
         }
         i++;
     }
-    i = 0;
+    i = 1;
     encontrado = false;
     while(columna + i < columnas){
         if (tablero[fila][columna+i].get_estado() == ' '){
@@ -81,7 +79,7 @@ bool juego::movimiento_valido(std::string casilla, int turno)
         }
         i++;
     }
-    i = 0;
+    i = 1;
     encontrado = false;
     while(fila - i >= 0){
         if (tablero[fila-i][columna].get_estado() == ' '){
@@ -95,12 +93,12 @@ bool juego::movimiento_valido(std::string casilla, int turno)
         }
         i++;
     }
-    i = 0;
+    i = 1;
     encontrado = false;
     while(fila + i < filas){
-        if (tablero[fila-i][columna].get_estado() == ' '){
+        if (tablero[fila+i][columna].get_estado() == ' '){
             break;
-        }else if (tablero[fila-i][columna].get_estado() == enemigo){
+        }else if (tablero[fila+i][columna].get_estado() == enemigo){
             encontrado = true;
         } else if (encontrado == true){
             validez = true;
@@ -109,16 +107,49 @@ bool juego::movimiento_valido(std::string casilla, int turno)
         }
         i++;
     }
-    //i = 0;
-    //encontrado = false;
+    i = 1;
+    encontrado = false;
+    while(fila + i < filas && columna + i < columnas){
+        if (tablero[fila+i][columna+i].get_estado() == ' '){
+            break;
+        }else if (tablero[fila+i][columna+i].get_estado() == enemigo){
+            encontrado = true;
+        } else if (encontrado == true){
+            validez = true;
+        }else{
+            break;
+        }
+        i++;
+    }
+    i = 1;
+    encontrado = false;
+    while(fila - i >= 0 && columna - i >= 0){
+        if (tablero[fila+i][columna+i].get_estado() == ' '){
+            break;
+        }else if (tablero[fila-i][columna-i].get_estado() == enemigo){
+            encontrado = true;
+        } else if (encontrado == true){
+            validez = true;
+        }else{
+            break;
+        }
+        i++;
+    }
     if (tablero[fila][columna].get_estado() != ' '){
         validez = false;
     }
     return validez;
 }
 
-bool juego::movimientos_disponibles()
+int juego::movimientos_disponibles(int turno)
 {
-    bool value = true;
+    int value = 0;
+    for(int i = 0; i < filas; i++){
+        for(int j = 0; j < columnas; j++){
+            if(movimiento_valido(i, j, turno)){
+                value ++;
+            }
+        }
+    }
     return value;
 }
