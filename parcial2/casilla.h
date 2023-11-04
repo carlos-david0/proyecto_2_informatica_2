@@ -6,7 +6,7 @@ class casilla
 {
 public:
     casilla();
-    void set_estado(char turno);
+    void set_estado(char estado);
     char get_estado();
 private:
     char estado;
