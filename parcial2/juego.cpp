@@ -173,9 +173,6 @@ std::string juego::movimiento_valido(std::string casilla, int turno)
     if (tablero[fila][columna].get_estado() != ' '){
         validez = "";
     }
-    if (fila < 0 || columna < 0 || fila >= filas || columna >= columnas){
-        validez = "";
-    }
     }
     return validez;
 }
