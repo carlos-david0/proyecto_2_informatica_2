@@ -5,13 +5,9 @@ casilla::casilla()
     estado = ' ';
 }
 
-void casilla::set_estado(int turno)
+void casilla::set_estado(char estado)
 {
-    if (turno % 2 == 0){
-        estado = '-';
-    }else{
-        estado = '*';
-    }
+    this->estado = estado;
 }
 
 char casilla::get_estado()
