@@ -52,7 +52,6 @@ std::string juego::movimiento_valido(std::string casilla, int turno)
     if (turno % 2 == 0){
         enemigo = '*';
     }
-    if (casilla.size()!= 2){}
     int fila = int(casilla[1]) - 49;
     int columna = int(casilla[0]) - 65;
     std::string validez = "";
