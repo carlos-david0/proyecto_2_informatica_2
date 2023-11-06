@@ -63,7 +63,7 @@ int main()
         int j1 = current.contador_j1();
         int j2 = current.contador_j2();
         if (current.ganador(j1, j2) != 0){
-            cout << "El ganador es el jugador: " << current.ganador(j1,j2) << j1 << " a " << j2 << endl;
+            cout << "El ganador es el jugador: " << current.ganador(j1,j2)<< " " << j1 << " a " << j2 << endl;
         }else{
             cout << "empate a: " << j1 << endl;
         }
