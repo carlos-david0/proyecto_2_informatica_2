@@ -1,21 +1,31 @@
 #ifndef JUEGO_H
 #define JUEGO_H
-#include "casilla.h"
+#include <fstream>
 #include <string>
+#include <iostream>
+#include <time.h>
+#include <iostream>
+#include "tablero.h"
+#include "jugador.h"
 
 class juego
 {
 public:
     juego(int filas, int columnas);
     ~juego();
-    std::string print_tablero();
-    bool movimiento_valido(std::string casilla, int turno);
-    bool movimiento_valido(int fila, int columna, int turno);
-    int movimientos_disponibles(int turno);
+    void partida();
+    void guardar_partida(std::string cant_fichas, std::string jugadores, std::string ganador);
 private:
-    casilla** tablero;
-    int filas;
-    int columnas;
+    int turno;
+    tablero *tablero;
+    jugador *j1, *j2;
+    bool game_over;
 };
 
-#endif // JUEGO_H
+void imprimir_menu(short menu);
+bool opcion_invalida(short opcion);
+void mostrar_historial();
+
+
+#endif // HERRAMIENTAS_H
+

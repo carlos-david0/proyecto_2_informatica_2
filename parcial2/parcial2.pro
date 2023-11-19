@@ -6,8 +6,12 @@ CONFIG -= qt
 SOURCES += \
         casilla.cpp \
         juego.cpp \
-        main.cpp
+        jugador.cpp \
+        main.cpp \
+        tablero.cpp
 
 HEADERS += \
     casilla.h \
-    juego.h
+    juego.h \
+    jugador.h \
+    tablero.h
