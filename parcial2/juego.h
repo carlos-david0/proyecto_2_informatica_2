@@ -14,11 +14,6 @@ public:
     juego(int filas, int columnas);
     ~juego();
     void partida();
-    /*void set_game_over(bool game_over);
-    bool get_game_over();
-    int get_turno();
-    void set_turno();
-    tablero* get_tablero();*/
     void guardar_partida(std::string cant_fichas, std::string jugadores, std::string ganador);
 private:
     int turno;
