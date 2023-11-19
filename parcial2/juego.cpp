@@ -1,474 +1,145 @@
 #include "juego.h"
-#include <cmath>
-#include <iostream>
-juego::juego(int filas, int columnas)
-{
-    tablero = new casilla*[filas];
-    for (int i = 0; i < filas; i++) {
-        tablero[i] = new casilla[columnas];
-    }
-    tablero[(filas/2)-1][(columnas/2)-1].set_estado('*');
-    tablero[(filas/2)][(columnas/2)].set_estado('*');
-    tablero[(filas/2)][(columnas/2)-1].set_estado('-');
-    tablero[(filas/2)-1][(columnas/2)].set_estado('-');
-    this->columnas = columnas;
-    this->filas = filas;
+
+juego::juego(int filas, int columnas){
+    tablero = new class tablero(filas, columnas);
+    j1 = new jugador;
+    j2 = new jugador;
+    turno = 0;
+    game_over = false;
 }
 
 juego::~juego()
 {
-    for (int i = 0; i < filas; i++) {
-        delete tablero[i];
-    }
     delete tablero;
+    delete j1;
+    delete j2;
 }
 
-std::string juego::print_tablero()
+void imprimir_menu(short menu)
 {
-    std::string tabla = "| |";
-    for (int i = 0; i < columnas; i++){
-        tabla += "|";
-        tabla += char(65+i);
-        tabla += "|";
+    switch(menu){
+    case 1:
+        std::cout<<"       BIENVENIDO A OTHELLO        "<< std::endl;
+        std::cout<<"----------MENU PRINCIPAL-----------"<< std::endl;
+        std::cout<<"         1. Iniciar partida        "<< std::endl;
+        std::cout<<"         2. Ver historial           "<< std::endl;
+        std::cout<<"         3. salir del juego        "<< std::endl;
+        std::cout<<"-----------------------------------"<< std::endl;
+        break;
+
+    case 2:
+        std::cout<<"          FIN DE LA PARTIDA         "<< std::endl;
+        std::cout<<"------------------------------------"<< std::endl;
+        std::cout<<"          1. Volver a jugar         "<< std::endl;
+        std::cout<<"          2. Ver historial         "<< std::endl;
+        std::cout<<"          3. salir del juego        "<< std::endl;
+        std::cout<<"-------------------------------------"<< std::endl;
+
     }
-    tabla += "\n";
-    for (int i = 0; i < filas; i++) {
-        tabla += "|";
-        tabla += std::to_string(1+i);
-        tabla += "|";
-        for (int j = 0; j < columnas; j++) {
-            tabla += "|";
-            tabla += tablero[i][j].get_estado();
-            tabla += "|";
+}
+bool opcion_invalida(short opcion)
+{
+    switch(opcion){
+    case 1: return false; break;
+    case 2: return false; break;
+    case 3: return false; break;
+    default: std::cout<< "ERROR: ingrese una opcion valida"; return true; break;
+    }
+}
+
+
+void juego::guardar_partida(std::string cant_fichas, std::string jugadores, std::string ganador)
+{
+    std::fstream file;
+
+    //toma la fecha y hora actual
+    time_t tiempo_actual;
+    time(&tiempo_actual);
+
+    std::string informacion = "PARTIDA "+jugadores+"\t"+ctime(&tiempo_actual)+"ganador: "+ganador+"\tcantidad de fichas: "+ cant_fichas;
+
+    file.open("historial.txt",std::ios::out|std::ios::app);
+    if(!file.is_open()){
+        std::cout<<"ERROR: no fue posible abrir el archivo";
+    }
+    file << informacion << std::endl; //verificar formato de escritura
+    file.close();
+}
+void mostrar_historial()
+{
+    std::fstream file;
+    std::string linea;
+
+    file.open("historial.txt",std::ios::in);
+
+    if(!file.is_open()){
+        std::cout<<"Aun no hay historial para mostrar";
+    }
+
+    while(!file.eof()){
+        getline(file,linea);
+        std::cout<<linea<<std::endl;
+    }
+
+    file.close();
+}
+
+
+void juego::partida()
+{
+    while (!game_over || tablero->movimientos_disponibles(turno) != ""){
+        if (tablero->movimientos_disponibles(turno) == ""){
+            std::cout << "el jugador no tiene movimientos disponibles" << std::endl;
+            turno++;
+            game_over = true;
+        }else{
+            game_over = false;
+            std::cout << "Turno: " << turno + 1 << ", jugador: ";
+            if (turno%2 == 0){
+                std::cout << "-" << std::endl;
+            }else{
+                std::cout << "*" << std::endl;
+            }
+            std::cout << tablero->print_tablero();
+            std::cout << "movimientos disponibles: " << std::endl;
+            std::cout << tablero->movimientos_disponibles(turno) << std::endl;
+            std::cout << "";
+            std::string paso;
+            std::getline(std::cin, paso);
+            while (tablero->movimiento_valido(paso, turno) == ""){
+                std::cout << "digite su movimiento (Columna en mayuscula y fila):";
+                std::getline (std::cin,paso);
+            }
+            tablero->tomar_turno(turno, paso);
+            turno++;
+            paso = "";
         }
-        tabla += "\n";
     }
-    return tabla;
-}
-
-std::string juego::movimiento_valido(std::string casilla, int turno)
-{
-    char enemigo = '-';
-    if (turno % 2 == 0){
-        enemigo = '*';
-    }
-    int fila = int(casilla[1]) - 49;
-    int columna = int(casilla[0]) - 65;
-    std::string validez = "";
-    bool encontrado = false;
-    int i = 1;
-    if (casilla.size()!= 2 || fila < 0 || columna < 0 || fila >= filas || columna >= columnas){
-        validez = "";
+    std::cout << tablero->print_tablero();
+    j1->set_puntos( tablero->contador_j1());
+    j2->set_puntos( tablero->contador_j2());
+    if (tablero->ganador(j1->get_puntos(), j2->get_puntos()) != 0){
+        std::cout << "El ganador es el jugador: " << tablero->ganador(j1->get_puntos(),j2->get_puntos())<< " " << j1->get_puntos() << " a " << j2->get_puntos() << std::endl;
     }else{
-    while(columna - i >= 0){
-        if (tablero[fila][columna-i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila][columna-i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(1);
-        }else{
-            break;
-        }
-        i++;
+        std::cout << "empate a: " << j1->get_puntos() << std::endl;
     }
-    i = 1;
-    encontrado = false;
-    while(columna + i < columnas){
-        if (tablero[fila][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila][columna+i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(2);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila - i >= 0){
-        if (tablero[fila-i][columna].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(3);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila + i < filas){
-        if (tablero[fila+i][columna].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(4);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila + i < filas && columna + i < columnas){
-        if (tablero[fila+i][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna+i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(5);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila - i >= 0 && columna - i >= 0){
-        if (tablero[fila-i][columna-i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna-i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(6);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila + i < filas && columna - i >= 0){
-        if (tablero[fila+i][columna - i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna-i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(7);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila - i >= 0 && columna + i < columnas){
-        if (tablero[fila-i][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna+i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez += std::to_string(8);
-        }else{
-            break;
-        }
-        i++;
-    }
-    if (tablero[fila][columna].get_estado() != ' '){
-        validez = "";
-    }
-    }
-    return validez;
-}
-
-bool juego::movimiento_valido(int fila, int columna, int turno)
-{
-    char enemigo = '-';
-    if (turno % 2 == 0){
-        enemigo = '*';
-    }
-    bool validez = false;
-    bool encontrado = false;
-    int i = 1;
-    while(columna - i >= 0){
-        if (tablero[fila][columna-i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila][columna-i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(columna + i < columnas){
-        if (tablero[fila][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila][columna+i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila - i >= 0){
-        if (tablero[fila-i][columna].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila + i < filas){
-        if (tablero[fila+i][columna].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila + i < filas && columna + i < columnas){
-        if (tablero[fila+i][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna+i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila - i >= 0 && columna - i >= 0){
-        if (tablero[fila-i][columna-i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna-i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila + i < filas && columna - i >= 0){
-        if (tablero[fila+i][columna - i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna-i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    encontrado = false;
-    while(fila - i >= 0 && columna + i < columnas){
-        if (tablero[fila-i][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna+i].get_estado() == enemigo){
-            encontrado = true;
-        } else if (encontrado == true){
-            validez = true;
-        }else{
-            break;
-        }
-        i++;
-    }
-    if (tablero[fila][columna].get_estado() != ' '){
-        validez = false;
-    }
-    return validez;
-}
-
-std::string juego::movimientos_disponibles(int turno)
-{
-    std::string value = "";
-    for(int i = 0; i < filas; i++){
-        for(int j = 0; j < columnas; j++){
-            if(movimiento_valido(i, j, turno)){
-                value += char(j + 65);
-                value += std::to_string(i+1);
-                value += "\n";
-            }
-        }
-    }
-    return value;
-}
-
-void juego::tomar_turno(int turno, std::string casilla)
-{
-    char enemigo = '-';
-    char propio = '*';
-    if (turno % 2 == 0){
-        propio = '-';
-        enemigo = '*';
-    }
-    std::string encierros = movimiento_valido(casilla, turno);
-    int fila = int(casilla[1]) - 49;
-    int columna = int(casilla[0]) - 65;
-    tablero[fila][columna].set_estado(propio);
-    int i = 1;
-    if (encierros.find("1") != std::string::npos){
-    while(columna - i >= 0){
-        if (tablero[fila][columna-i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila][columna-i].get_estado() == enemigo){
-            tablero[fila][columna-i].set_estado(propio);
-        } else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if (encierros.find("2") != std::string::npos){
-    while(columna + i < columnas){
-        if (tablero[fila][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila][columna+i].get_estado() == enemigo){
-            tablero[fila][columna+i].set_estado(propio);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if (encierros.find("3") != std::string::npos){
-    while(fila - i >= 0){
-        if (tablero[fila-i][columna].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna].get_estado() == enemigo){
-            tablero[fila-i][columna].set_estado(propio);
-        } else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if (encierros.find("4") != std::string::npos){
-    while(fila + i < filas){
-        if (tablero[fila+i][columna].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna].get_estado() == enemigo){
-            tablero[fila+i][columna].set_estado(propio);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if(encierros.find("5") != std::string::npos){
-    while(fila + i < filas && columna + i < columnas){
-        if (tablero[fila+i][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna+i].get_estado() == enemigo){
-            tablero[fila+i][columna+i].set_estado(propio);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if(encierros.find("6") != std::string::npos){
-    while(fila - i >= 0 && columna - i >= 0){
-        if (tablero[fila-i][columna-i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna-i].get_estado() == enemigo){
-            tablero[fila-i][columna-i].set_estado(propio);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if(encierros.find("7") != std::string::npos){
-    while(fila + i < filas && columna - i >= 0){
-        if (tablero[fila+i][columna - i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila+i][columna-i].get_estado() == enemigo){
-            tablero[fila+i][columna-i].set_estado(propio);
-        }else{
-            break;
-        }
-        i++;
-    }
-    i = 1;
-    }
-    if(encierros.find("8") != std::string::npos){
-    while(fila - i >= 0 && columna + i < columnas){
-        if (tablero[fila-i][columna+i].get_estado() == ' '){
-            break;
-        }else if (tablero[fila-i][columna+i].get_estado() == enemigo){
-            tablero[fila-i][columna+i].set_estado(propio);
-        }else{
-            break;
-        }
-        i++;
-    }
-    }
-}
-
-int juego::contador_j1()
-{
-    int j1 = 0; //-
-    for(int i = 0; i < filas; i++){
-    for(int j = 0; j < columnas; j++){
-        if(tablero[i][j].get_estado() == '-'){
-            j1++;
-            }
-        }
-    }
-    return j1;
-}
-int juego::contador_j2()
-{
-    int j2 = 0; //*
-    for(int i = 0; i < filas; i++){
-        for(int j = 0; j < columnas; j++){
-            if(tablero[i][j].get_estado() == '*'){
-            j2++;
-            }
-        }
-    }
-    return j2;
-}
-
-int juego::ganador(int j1, int j2)
-{
-    int winner;
-    if (j1 > j2){
-        winner = 1;
-    }else if(j2 < j1){
-        winner = 2;
+    //al finalizar la partida guardar la información de la partida
+    std::string namej1 = "";
+    std::string namej2 = "";
+    std::cout << "inserte el nombre del jugador 1: ";
+    std::cin >> namej1;
+    j1->set_nombre(namej1);
+    std::cout << "inserte el nombre del jugador 2: ";
+    std::cin >> namej2;
+    j2->set_nombre(namej2);
+    if (tablero->ganador(j1->get_puntos(),j2->get_puntos()) == 1){
+        guardar_partida(std::to_string(j1->get_puntos())+ ", " + std::to_string(j2->get_puntos()), j1->get_nombre() + " vs " + j2->get_nombre(), j1->get_nombre());
+    }else if (tablero->ganador(j1->get_puntos(),j2->get_puntos()) == 2){
+        guardar_partida(std::to_string(j1->get_puntos())+ ", " + std::to_string(j2->get_puntos()), j1->get_nombre()+ " vs "+ j2->get_nombre(), j2->get_nombre());
     }else{
-        winner = 0;
+        guardar_partida(std::to_string(j1->get_puntos())+ ", " + std::to_string(j2->get_puntos()), j1->get_nombre()+" vs "+j2->get_nombre(), "empate");
     }
-    return winner;
 }
+
+
+
